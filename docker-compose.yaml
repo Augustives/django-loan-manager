@@ -1,0 +1,72 @@
+version: "3"
+
+services:
+  db:
+    image: postgres
+    networks:
+      - loan_manager_network
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    networks:
+      - loan_manager_network
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/
+      - rabbitmq_log:/var/log/rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+  celery_worker:
+    build: 
+      context: backend
+    command: celery -A loan_manager worker --loglevel=info
+    networks:
+      - loan_manager_network
+    environment:
+      - CELERY_BROKER_TRANSPORT_URL=amqp://guest:guest@rabbitmq:5672//
+      - DATABASE_NAME=postgres
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_HOST=db
+    depends_on:
+      - rabbitmq
+
+  django:
+    build:
+      context: backend
+    container_name: django_app
+    command: >
+      sh -c "python3 manage.py makemigrations --noinput &&
+      python3 manage.py migrate --noinput &&
+      python3 manage.py shell < ./utils/create_superuser.py &&
+      python3 manage.py runserver 0.0.0.0:8000"
+    networks:
+      - loan_manager_network
+    ports:
+      - "8000:8000"
+    environment:
+      - CELERY_BROKER_TRANSPORT_URL=amqp://guest:guest@rabbitmq:5672//
+      - DATABASE_NAME=postgres
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_HOST=db
+    depends_on:
+      - db
+      - rabbitmq
+
+volumes:
+  postgres_db:
+  rabbitmq_data:
+  rabbitmq_log:
+
+networks:
+  loan_manager_network:

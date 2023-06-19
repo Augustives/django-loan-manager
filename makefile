@@ -1,4 +1,4 @@
-.PHONY: up down recreate test
+.PHONY: up down recreate test_backend
 
 up:
 	docker-compose up -d

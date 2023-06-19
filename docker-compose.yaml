@@ -43,7 +43,6 @@ services:
   django:
     build:
       context: backend
-    container_name: django_app
     command: >
       sh -c "python3 manage.py makemigrations --noinput &&
       python3 manage.py migrate --noinput &&
@@ -62,6 +61,16 @@ services:
     depends_on:
       - db
       - rabbitmq
+
+  react:
+    build:
+      context: ./frontend
+    networks:
+      - loan_manager_network
+    ports:
+      - "3000:3000"
+    depends_on:
+      - django
 
 volumes:
   postgres_db:

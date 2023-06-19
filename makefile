@@ -7,7 +7,7 @@ down:
 	docker-compose down
 
 recreate:
-	docker-compose down -v --remove-orphans
+	docker-compose down -v --remove-orphans --volumes
 	docker-compose up -d --build --force-recreate
 
 test_backend:

@@ -19,8 +19,6 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         address_data = validated_data.pop("address")
-        address_serializer = AddressSerializer(data=address_data)
-        address_serializer.is_valid(raise_exception=True)
-        address: Address = address_serializer.save()
+        address: Address = Address.objects.create(address_data)
 
         return Customer.objects.create(address=address, **validated_data)

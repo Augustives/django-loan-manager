@@ -21,9 +21,7 @@ class LoanProposalSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         customer_data = validated_data.pop("customer")
-        customer_serializer = CustomerSerializer(data=customer_data)
-        customer_serializer.is_valid(raise_exception=True)
-        customer: Customer = customer_serializer.save()
+        customer: Customer = Customer.objects.create(**customer_data)
 
         loan_proposal = LoanProposal.objects.create(customer=customer, **validated_data)
         process_loan_proposals.delay(loan_proposal.id)
